@@ -401,7 +401,7 @@ def _plot_value_by_policy(df: pd.DataFrame, plots_dir: str, clip: float) -> None
         vals = [est_df.loc[p, "value_hat"] if p in est_df.index else 0 for p in policies]
         ci_low = [est_df.loc[p, "ci_low"] if p in est_df.index else 0 for p in policies]
         ci_high = [est_df.loc[p, "ci_high"] if p in est_df.index else 0 for p in policies]
-        errs = [[v - l for v, l in zip(vals, ci_low)], [h - v for v, h in zip(vals, ci_high)]]
+        errs = [[v - lo for v, lo in zip(vals, ci_low)], [h - v for v, h in zip(vals, ci_high)]]
         ax.bar(x + i * width, vals, width, label=est, color=colors[i], alpha=0.85)
         ax.errorbar(x + i * width, vals, yerr=errs, fmt="none", color="black", capsize=4, lw=1.5)
 

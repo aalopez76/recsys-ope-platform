@@ -8,6 +8,7 @@ Output: Markdown report and CSV table in reports/tables.
 
 import argparse
 import sys
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -17,11 +18,9 @@ from recbole.quick_start import run_recbole
 
 # Ensure we can import our modules
 sys.path.append(str(Path(__file__).parent.parent.parent))
-from src.recsys.prepare_recbole_dataset import prepare_obd_sample_dataset
+from src.recsys.prepare_recbole_dataset import prepare_obd_sample_dataset  # noqa: E402
 
 MODELS = ["Pop", "BPR", "NeuMF", "LightGCN"]
-
-import traceback
 
 
 def run_baseline(model_name: str, config_file: str) -> dict[str, Any]:

@@ -244,8 +244,11 @@ elif page == "🎯 OPE Suite":
     if df is None:
         show_missing("ope_results_sample.csv", "Run: `python -m src.ope.run_ope_suite`")
     else:
+        source = (
+            "ope_results_with_tf_agents.csv" if df_ext is not None else "ope_results_sample.csv"
+        )
         st.info(
-            f"Loaded: `{'ope_results_with_tf_agents.csv' if df_ext is not None else 'ope_results_sample.csv'}` "
+            f"Loaded: `{source}` "
             f"({len(df)} rows, {df['policy_name'].nunique()} policies)"
         )
 
