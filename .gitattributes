@@ -1,0 +1,32 @@
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Python source files
+*.py text eol=lf
+
+# Config & docs
+*.yaml text eol=lf
+*.yml  text eol=lf
+*.md   text eol=lf
+*.toml text eol=lf
+*.cfg  text eol=lf
+*.ini  text eol=lf
+*.txt  text eol=lf
+
+# Shell
+*.sh text eol=lf
+
+# Data (treat as binary to avoid line-ending corruption)
+*.npz binary
+*.npy binary
+*.joblib binary
+*.pkl binary
+
+# Images (binary)
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+
+# Jupyter (binary intent; excluded by .gitignore anyway)
+*.ipynb binary

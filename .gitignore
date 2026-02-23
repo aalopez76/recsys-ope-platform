@@ -1,0 +1,96 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Linting
+.ruff_cache/
+.mypy_cache/
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ===========================================================================
+# Data — ignore heavy/regenerable artifacts
+# ===========================================================================
+data/raw/
+data/interim/
+data/bandit_feedback/*.npz
+data/bandit_feedback/*.json
+data/recbole_atomic/
+data/splits/*.npz
+
+# Allow versioned small sample package for offline reproducibility
+!data/sample/
+!data/sample/**
+
+# ===========================================================================
+# Models & Training outputs (regenerable)
+# ===========================================================================
+models/
+checkpoints/
+logs/
+runs/
+*.ckpt
+*.pth
+*.h5
+*.pb
+
+# RecBole artifacts
+data/recbole_dataset/
+saved/
+log/
+
+# ===========================================================================
+# Reports — ignore generated plots/csvs, keep markdown summaries
+# ===========================================================================
+reports/plots/*
+!reports/plots/.gitkeep
+reports/tables/*
+!reports/tables/.gitkeep
+reports/*.png
+reports/*.jpg
+reports/*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment
+.env
+.env.local
+
+# Extra safety ignores
+data/raw_large/
+References/
+pipeline_step*.log
+*.log
