@@ -1,0 +1,42 @@
+
+# RecBole Configuration for OBD Sample
+# Tuning: minimal for CPU execution on sample dataset
+
+# Dataset
+gpu_id: -1 # CPU
+seed: 42
+dataset: obd_sample
+data_path: data/recbole_dataset/
+benchmark_filename: ['train', 'valid', 'test']
+checkpoint_dir: saved/recbole
+log_root: log/
+filter_inter_by_user_or_item: False
+
+# Fields (Atomic files: obd_sample.user, obd_sample.item, obd_sample.inter)
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+TIME_FIELD: timestamp
+LABEL_FIELD: click
+load_col:
+    inter: [user_id, item_id, timestamp, click]
+    item: [item_id, i0, i1, i2, i3, i4]
+
+# Evaluation
+eval_args:
+    split: {'RS': [0.8, 0.1, 0.1]} # This is ignored because we provide .train/.valid/.test files
+    group_by: user
+    order: RO # Random Order (since we have explicit splits)
+    mode: full
+
+metrics: ["Recall", "NDCG", "MRR"]
+topk: [10, 20]
+valid_metric: NDCG@10
+metric_decimal_place: 4
+
+# Training
+epochs: 20
+train_batch_size: 2048
+eval_batch_size: 4096
+learner: adam
+learning_rate: 0.001
+stopping_step: 5 # Early stopping

@@ -1,0 +1,33 @@
+# Off-Policy Evaluation (OBP) Configuration
+# ============================================================================
+# Placeholder — will be filled when src/ope/evaluate.py is implemented.
+# ============================================================================
+
+# Estimators to run
+estimators:
+  - name: "IPS"                  # Inverse Propensity Scoring
+    enabled: true
+  - name: "DR"                   # Doubly Robust
+    enabled: true
+  - name: "DM"                   # Direct Method
+    enabled: true
+
+# Evaluation settings
+evaluation:
+  split_source: "data/splits/split_manifest.npz"   # Single source of truth
+  split_key: "test_idx"          # Evaluate on test split
+  n_bootstrap: 100               # Bootstrap iterations for CI
+  confidence_level: 0.95
+  seed: 42
+
+# Input data
+data:
+  bandit_feedback: "data/bandit_feedback/bandit_feedback.npz"
+  action_id_map: "data/bandit_feedback/action_id_map.json"
+  metadata: "data/bandit_feedback/metadata.json"
+
+# Output
+output:
+  report: "reports/ope_comparison.md"
+  tables: "reports/tables/"
+  plots: "reports/plots/"

@@ -1,0 +1,59 @@
+# Data Pipeline Configuration
+
+# ------------------------------------------------------------------------------
+# Dataset Seletection & Source
+# ------------------------------------------------------------------------------
+dataset:
+  behavior_policy: "random"  # 'random' or 'bts'
+  campaign: "all"            # 'all', 'men', 'women'
+  test_size: 0.3             # Fraction of data for testing
+  val_size: 0.1              # Fraction of train data for validation (0.1 = 10%)
+  split_strategy: "time"     # 'time' (temporal split) or 'random' (random shuffle)
+  random_state: 42           # Seed for reproducibility (splits, clustering, shuffling)
+
+# ------------------------------------------------------------------------------
+# Output Paths
+# ------------------------------------------------------------------------------
+paths:
+  raw: "data/raw/obd"
+  interim: "data/interim"
+  recbole: "data/recbole_atomic"
+  bandit: "data/bandit_feedback"
+  splits: "data/splits"
+  reports: "reports"
+
+# ------------------------------------------------------------------------------
+# Processing & Filtering
+# ------------------------------------------------------------------------------
+processing:
+  # User ID Generation Strategy
+  # Options: 'hash' (deterministic hash of context), 'kmeans' (clustering)
+  user_id_strategy: "hash"
+  
+  # KMeans settings (only used if user_id_strategy="kmeans")
+  kmeans:
+    n_clusters: 100
+    n_init: 10
+    
+  # Filtering
+  min_user_inter: 5   # Min interactions per user to keep
+  min_item_inter: 5   # Min interactions per item to keep
+  
+  # Production / Audit
+  max_rows_audit: 100000  # Max rows to export to CSV for manual audit (None = no limit)
+  export_csv: false       # Whether to export full CSV (default: False for production)
+
+# ------------------------------------------------------------------------------
+# Schema Validation
+# ------------------------------------------------------------------------------
+validation:
+  pscore:
+    min: 1.0e-6  # Clipping threshold (must be > 0)
+    max: 1.0
+    action: "clip"  # 'clip' or 'drop' rows with invalid pscores
+  
+  position:
+    allowed_values: [1, 2, 3]
+    
+  item_id:
+    reindex: true  # Force reindexing to [0, n_actions-1]

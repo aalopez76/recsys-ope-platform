@@ -1,0 +1,38 @@
+# TF-Agents Bandit/RL Configuration
+# ============================================================================
+# Placeholder — will be filled when src/bandit/train.py is implemented.
+# ============================================================================
+
+# Agent selection
+agent:
+  name: "LinUCB"                 # Options: LinUCB, LinTS, NeuralBandit
+  candidates:
+    - "LinUCB"
+    - "LinTS"
+    - "NeuralBandit"
+
+# Training
+training:
+  num_iterations: 10000
+  batch_size: 64
+  learning_rate: 0.01
+  seed: 42
+
+# Environment (from OBD bandit feedback)
+environment:
+  context_dim: 20                # c0..c19
+  n_actions: 80
+  data_source: "data/bandit_feedback/bandit_feedback.npz"
+  split_source: "data/splits/split_manifest.npz"
+  split_key: "train_idx"
+
+# Evaluation
+evaluation:
+  metrics: ["cumulative_reward", "regret"]
+  eval_interval: 500
+  seed: 42
+
+# Output
+output:
+  checkpoint_dir: "checkpoints/bandits/"
+  report: "reports/bandit_results.md"

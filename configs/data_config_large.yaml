@@ -1,0 +1,36 @@
+# Data Pipeline Configuration (Large Sample)
+dataset:
+  behavior_policy: "random"
+  campaign: "all"
+  test_size: 0.3
+  val_size: 0.1
+  split_strategy: "time"
+  random_state: 42
+
+paths:
+  raw: "data/raw_large/obd"
+  interim: "data/interim_large"
+  recbole: "data/recbole_atomic_large"
+  bandit: "data/bandit_feedback_large"
+  splits: "data/splits_large"
+  reports: "reports_large"
+
+processing:
+  user_id_strategy: "hash"
+  kmeans:
+    n_clusters: 100
+    n_init: 10
+  min_user_inter: 5
+  min_item_inter: 5
+  max_rows_audit: 100000
+  export_csv: false
+
+validation:
+  pscore:
+    min: 1.0e-6
+    max: 1.0
+    action: "clip"
+  position:
+    allowed_values: [1, 2, 3]
+  item_id:
+    reindex: true

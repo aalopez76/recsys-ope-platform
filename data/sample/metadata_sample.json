@@ -1,0 +1,21 @@
+{
+  "n_rounds": 10000,
+  "n_actions": 80,
+  "context_dim": 20,
+  "policy": "random",
+  "campaign": "all",
+  "action_id_map_path": "action_id_map.json",
+  "mapping_type": "identity",
+  "is_identity_map": true,
+  "seed": 42,
+  "dataset_fingerprint": "a5f62abe67189945ea52ab1b8f21f3a6",
+  "split_manifest_path": "splits/split_manifest.npz",
+  "split_manifest_json": "split_manifest.json",
+  "split_strategy": "time",
+  "split_counts": {
+    "n_train": 6300,
+    "n_val": 700,
+    "n_test": 3000
+  },
+  "split_manifest_hash": "07db61136a04a92b6643c86d811df4ea7130470c6410cb997425e5a8591cf88a"
+}
