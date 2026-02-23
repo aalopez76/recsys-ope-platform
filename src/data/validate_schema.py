@@ -4,7 +4,7 @@ Enforces strict validaton rules on raw and processed data.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class SchemaValidator:
     """Schema validator for OBD bandits and RecBole data."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """Initialize validator with configuration.
 
         Args:
@@ -28,7 +28,7 @@ class SchemaValidator:
         self.allowed_positions = set(config.get("position", {}).get("allowed_values", {1, 2, 3}))
         self.reindex_items = config.get("item_id", {}).get("reindex", True)
 
-    def validate_bandit_feedback(self, bandit_feedback: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_bandit_feedback(self, bandit_feedback: dict[str, Any]) -> dict[str, Any]:
         """Validate and fix bandit feedback data.
 
         Args:

@@ -15,7 +15,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -71,7 +71,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
+def load_config(config_path: Optional[Path] = None) -> dict[str, Any]:
     """Load configuration from YAML."""
     path = config_path or CONFIG_PATH
     try:
@@ -85,7 +85,7 @@ def load_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
         raise
 
 
-def get_paths(config: Dict[str, Any]) -> Dict[str, Path]:
+def get_paths(config: dict[str, Any]) -> dict[str, Path]:
     """Resolve absolute paths from config."""
     paths = {}
     for key, rel_path in config["paths"].items():
@@ -94,7 +94,7 @@ def get_paths(config: Dict[str, Any]) -> Dict[str, Path]:
     return paths
 
 
-def compute_fingerprint(config: Dict[str, Any], n_rounds: int) -> str:
+def compute_fingerprint(config: dict[str, Any], n_rounds: int) -> str:
     """Compute dataset fingerprint for reproducibility."""
     params = {
         "policy": config["dataset"]["behavior_policy"],
@@ -123,8 +123,8 @@ def copy_sample_data_if_needed(raw_dir: Path) -> None:
 
 
 def load_obd_dataset(
-    config: Dict[str, Any], raw_dir: Path
-) -> Tuple[OpenBanditDataset, Dict[str, Any]]:
+    config: dict[str, Any], raw_dir: Path
+) -> tuple[OpenBanditDataset, dict[str, Any]]:
     """Load Open Bandit Dataset via OBP."""
     logger.info("Loading Open Bandit Dataset...")
 
@@ -144,7 +144,7 @@ def load_obd_dataset(
     return dataset, bandit_feedback
 
 
-def create_user_ids(context: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
+def create_user_ids(context: np.ndarray, config: dict[str, Any]) -> np.ndarray:
     """Create deterministic user IDs."""
     strategy = config["processing"]["user_id_strategy"]
     seed = config["dataset"]["random_state"]
@@ -185,7 +185,7 @@ def create_user_ids(context: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
     return user_ids
 
 
-def is_identity_action_map(action_id_map: Dict[Any, Any], n_actions: int) -> bool:
+def is_identity_action_map(action_id_map: dict[Any, Any], n_actions: int) -> bool:
     """Check if action_id_map is identity mapping.
 
     Handles both int and str keys (for JSON vs in-memory compatibility).
@@ -211,8 +211,8 @@ def is_identity_action_map(action_id_map: Dict[Any, Any], n_actions: int) -> boo
 
 
 def generate_split_manifest(
-    n_rounds: int, config: Dict[str, Any], paths: Dict[str, Path]
-) -> Dict[str, Any]:
+    n_rounds: int, config: dict[str, Any], paths: dict[str, Path]
+) -> dict[str, Any]:
     """Generate deterministic train/val/test splits.
 
     Split strategy:
@@ -341,11 +341,11 @@ def generate_split_manifest(
 
 
 def save_bandit_feedback(
-    bandit_feedback: Dict[str, Any],
-    paths: Dict[str, Path],
-    config: Dict[str, Any],
+    bandit_feedback: dict[str, Any],
+    paths: dict[str, Path],
+    config: dict[str, Any],
     fingerprint: str,
-    split_info: Dict[str, Any],
+    split_info: dict[str, Any],
 ) -> None:
     """Save OBP format artifacts with action_id_map and split manifest metadata.
 
@@ -416,10 +416,10 @@ def save_bandit_feedback(
 
 
 def generate_recbole_files(
-    bandit_feedback: Dict[str, Any],
+    bandit_feedback: dict[str, Any],
     user_ids: np.ndarray,
-    paths: Dict[str, Path],
-    stats: Dict[str, Any],
+    paths: dict[str, Path],
+    stats: dict[str, Any],
 ) -> None:
     """Generate RecBole atomic files (inter, user, item)."""
     logger.info("Generating RecBole atomic files...")
@@ -513,7 +513,7 @@ def generate_recbole_files(
 
 
 def save_audit_csv(
-    bandit_feedback: Dict[str, Any], paths: Dict[str, Path], config: Dict[str, Any]
+    bandit_feedback: dict[str, Any], paths: dict[str, Path], config: dict[str, Any]
 ) -> None:
     """Save audit CSV if enabled."""
     if not config["processing"].get("export_csv", False):
@@ -538,7 +538,7 @@ def save_audit_csv(
     df.to_csv(paths["raw"] / "audit_sample.csv", index=False)
 
 
-def generate_stats_report(stats: Dict[str, Any], paths: Dict[str, Path]) -> None:
+def generate_stats_report(stats: dict[str, Any], paths: dict[str, Path]) -> None:
     """Generate markdown report."""
     report = f"""# OBD Data Pipeline Report
 
@@ -655,7 +655,7 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
     logger.info("Pipeline completed successfully.")
 
 
-def validate_required_artifacts(paths: Dict[str, Path]) -> None:
+def validate_required_artifacts(paths: dict[str, Path]) -> None:
     """Validate all required artifacts exist (fail-fast).
 
     Args:

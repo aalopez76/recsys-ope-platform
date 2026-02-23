@@ -9,7 +9,7 @@ Output: Markdown report and CSV table in reports/tables.
 import argparse
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -24,7 +24,7 @@ MODELS = ["Pop", "BPR", "NeuMF", "LightGCN"]
 import traceback
 
 
-def run_baseline(model_name: str, config_file: str) -> Dict[str, Any]:
+def run_baseline(model_name: str, config_file: str) -> dict[str, Any]:
     """Run a single RecBole model and return test metrics."""
     print(f"\n{'='*40}\nRunning {model_name}...\n{'='*40}")
 

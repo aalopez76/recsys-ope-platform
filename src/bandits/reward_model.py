@@ -172,9 +172,9 @@ def _write_report(
 ) -> None:
     report = f"""# Reward Model Metrics
 
-**Date**: 2026-02-22  
-**Model**: LogisticRegression (sklearn), C=1.0, balanced class_weight  
-**Features**: concat(context[25d], action_context[5d]) = 25d  
+**Date**: 2026-02-22
+**Model**: LogisticRegression (sklearn), C=1.0, balanced class_weight
+**Features**: concat(context[25d], action_context[5d]) = 25d
 **Training data**: `train_idx` only (SSOT: split_manifest_sample.npz)
 
 ## Dataset
@@ -191,7 +191,7 @@ def _write_report(
 | AUC-ROC | {auc_train:.4f} | {auc_val:.4f} | {baseline_auc:.4f} |
 | Log-Loss | {ll_train:.4f} | {ll_val:.4f} | {baseline_ll:.4f} |
 
-**AUC Lift over baseline**: {auc_val - baseline_auc:.4f}  
+**AUC Lift over baseline**: {auc_val - baseline_auc:.4f}
 **LogLoss reduction**: {baseline_ll - ll_val:.4f}
 
 ## Artifacts

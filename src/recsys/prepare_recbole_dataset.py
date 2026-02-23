@@ -118,7 +118,7 @@ def create_splits(source_dir: Path, out_dir: Path, dataset_name: str) -> tuple[s
 
     # FIX: Check for rating column (with type suffix) if click is missing
     # Pandas reads 'rating:float' as column name.
-    rating_col = next((c for c in df.columns if c.startswith("rating")), None)
+    next((c for c in df.columns if c.startswith("rating")), None)
 
     # if "click" not in df.columns and rating_col:
     #     logger.info(f"Renaming '{rating_col}' to 'click' for compatibility.")
@@ -188,7 +188,7 @@ def create_splits(source_dir: Path, out_dir: Path, dataset_name: str) -> tuple[s
     # We assume 80 items. If user has >= 80 interactions, DROP THEM.
     # Ideally we check against actual unique items in dataset.
     all_known_items = set(pd.concat([train_df, valid_df, test_df])[item_col].unique())
-    n_items_global = len(all_known_items)  # Or 80 if we load atomic file.
+    len(all_known_items)  # Or 80 if we load atomic file.
     # To be safe, filter users with >= n_items_global interactions. (Or even n_items_global - 1 to be safe for sampling)
 
     # Actually, RecBole sampler needs at least 1 negative. So count < n_items.

@@ -620,10 +620,10 @@ def _write_report(
 
     report = f"""# OPE Suite Report v2 — Sample Dataset
 
-**Date**: 2026-02-22  
-**Status**: ✅ Certified (Strict OPE Alignment)  
-**Split SSOT**: `data/sample/split_manifest_sample.npz`  
-**Evaluation Split**: `test_idx` (n={bf_test['n_rounds']})  
+**Date**: 2026-02-22
+**Status**: ✅ Certified (Strict OPE Alignment)
+**Split SSOT**: `data/sample/split_manifest_sample.npz`
+**Evaluation Split**: `test_idx` (n={bf_test['n_rounds']})
 **Train Split (policy derivation)**: `train_idx` (n={bf_train['n_rounds']})
 
 ---

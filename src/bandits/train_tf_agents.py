@@ -235,12 +235,12 @@ def _write_summary(
     df = pd.DataFrame(rows)
     report = f"""# Bandit Agent Training Summary
 
-**Date**: 2026-02-22  
-**Environment**: Simulated OBD Bandit (sklearn reward model as simulator)  
-**Context dim**: {context_dim}  
-**n_actions**: {n_actions}  
-**Steps**: {steps}  
-**Seed**: {seed}  
+**Date**: 2026-02-22
+**Environment**: Simulated OBD Bandit (sklearn reward model as simulator)
+**Context dim**: {context_dim}
+**n_actions**: {n_actions}
+**Steps**: {steps}
+**Seed**: {seed}
 **Epsilon (EpsGreedy)**: {epsilon}
 
 > Note: TF-Agents high-level agents were replaced with equivalent numpy implementations

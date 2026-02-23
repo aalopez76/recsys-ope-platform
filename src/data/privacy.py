@@ -4,7 +4,7 @@ Enforces privacy checks and policies.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 
@@ -15,7 +15,7 @@ class PrivacyPolicy:
     """Privacy policy enforcement for OBD data processing."""
 
     @staticmethod
-    def verify_no_pii(bandit_feedback: Dict[str, Any]) -> bool:
+    def verify_no_pii(bandit_feedback: dict[str, Any]) -> bool:
         """Verify dataset contains no PII (Personal Identifiable Information).
 
         Args:

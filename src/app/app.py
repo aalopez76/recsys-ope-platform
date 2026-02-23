@@ -278,7 +278,7 @@ elif page == "🎯 OPE Suite":
             fig, ax = plt.subplots(figsize=(12, 5))
             palette = ["#2196F3", "#4CAF50", "#FF5722", "#9C27B0", "#FF9800"]
             for i, (policy, pdf) in enumerate(df_filt.groupby("policy_name")):
-                for j, (est, edf) in enumerate(pdf.groupby("estimator")):
+                for j, (_est, edf) in enumerate(pdf.groupby("estimator")):
                     x_pos = i * (len(estimators) + 1) + j
                     v = edf["value_hat"].values[0]
                     lo = edf["ci_low"].values[0]
