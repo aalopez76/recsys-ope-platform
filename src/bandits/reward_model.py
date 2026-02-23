@@ -37,9 +37,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-def build_features(
-    context: np.ndarray, action_context: np.ndarray, actions: np.ndarray
-) -> np.ndarray:
+def build_features(context: np.ndarray, action_context: np.ndarray, actions: np.ndarray) -> np.ndarray:
     """Concatenate context and action_context for each round. Returns (n, 25)."""
     action_feats = action_context[actions]  # (n, 5)
     return np.concatenate([context, action_feats], axis=1)  # (n, 25)
@@ -81,9 +79,7 @@ def train_reward_model(
             ("scaler", StandardScaler()),
             (
                 "clf",
-                LogisticRegression(
-                    C=1.0, solver="lbfgs", max_iter=500, class_weight="balanced", random_state=seed
-                ),
+                LogisticRegression(C=1.0, solver="lbfgs", max_iter=500, class_weight="balanced", random_state=seed),
             ),
         ]
     )

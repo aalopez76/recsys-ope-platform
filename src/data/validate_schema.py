@@ -58,16 +58,14 @@ class SchemaValidator:
                     bandit_feedback[key] = bandit_feedback[key][valid_mask]
                 # Note: 'action_context' stays same as it's indexed by action ID, not round
             else:
-                raise ValueError(
-                    f"Invalid pscores found and action '{self.pscore_action}' is not supported."
-                )
+                raise ValueError(f"Invalid pscores found and action '{self.pscore_action}' is not supported.")
 
         # 2. Position Validation
         positions = bandit_feedback["position"]
         unique_positions = set(np.unique(positions))
         if not unique_positions.issubset(self.allowed_positions):
             raise ValueError(
-                f"Invalid positions found: {unique_positions - self.allowed_positions}. Allowed: {self.allowed_positions}"
+                f"Invalid positions found: {unique_positions - self.allowed_positions}. Allowed: {self.allowed_positions}"  # noqa: E501
             )
 
         # 3. Item ID (Action) Validation

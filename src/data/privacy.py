@@ -53,10 +53,8 @@ class PrivacyPolicy:
             n_samples: Total interactions
         """
         avg_inter = n_samples / n_users
-        logger.info(
-            f"Privacy Metrics: {n_users} derived users, {avg_inter:.2f} avg interactions/user."
-        )
+        logger.info(f"Privacy Metrics: {n_users} derived users, {avg_inter:.2f} avg interactions/user.")
         if avg_inter < 2.0:
             logger.warning(
-                "Privacy Warning: Low average interactions (<2.0) may increase re-identification risk for specific patterns."
+                "Privacy Warning: Low average interactions (<2.0) may increase re-identification risk for specific patterns."  # noqa: E501
             )

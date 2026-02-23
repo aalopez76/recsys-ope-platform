@@ -49,9 +49,7 @@ def setup_recbole_dir(
         user_col = next((c for c in df_user.columns if c.startswith("user_id")), "user_id")
 
         if user_col not in df_user.columns:
-            logger.warning(
-                f"Could not find user_id column in {user_src.name}. Columns: {df_user.columns}"
-            )
+            logger.warning(f"Could not find user_id column in {user_src.name}. Columns: {df_user.columns}")
             # Fallback to copy if checking fails? Or raise error?
             # Raising error is better to catch issues early.
             raise KeyError(f"Missing user_id column in {user_src.name}")
@@ -112,9 +110,7 @@ def create_splits(source_dir: Path, out_dir: Path, dataset_name: str) -> tuple[s
     item_col = next((c for c in df.columns if c.startswith("item_id")), "item_id")
 
     if user_col not in df.columns or item_col not in df.columns:
-        raise KeyError(
-            f"Missing user/item columns in {inter_src.name}. Vars: {user_col}, {item_col}"
-        )
+        raise KeyError(f"Missing user/item columns in {inter_src.name}. Vars: {user_col}, {item_col}")
 
     # FIX: Check for rating column (with type suffix) if click is missing
     # Pandas reads 'rating:float' as column name.
@@ -135,9 +131,7 @@ def create_splits(source_dir: Path, out_dir: Path, dataset_name: str) -> tuple[s
     total_split = len(train_idx) + len(val_idx) + len(test_idx)
 
     if n_rounds != total_split:
-        raise ValueError(
-            f"Mismatch: inter file has {n_rounds} rows, manifest has {total_split} indices"
-        )
+        raise ValueError(f"Mismatch: inter file has {n_rounds} rows, manifest has {total_split} indices")
 
     # Split based on original indices
     # df is full original dataframe here
@@ -255,12 +249,8 @@ def prepare_obd_sample_dataset(sample_dir: str, out_dir: str, dataset_name: str 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare RecBole dataset from OBD sample")
-    parser.add_argument(
-        "--sample-dir", type=str, default="data/sample", help="Path to sample artifacts"
-    )
-    parser.add_argument(
-        "--out-dir", type=str, default="data/recbole_dataset", help="Output root directory"
-    )
+    parser.add_argument("--sample-dir", type=str, default="data/sample", help="Path to sample artifacts")
+    parser.add_argument("--out-dir", type=str, default="data/recbole_dataset", help="Output root directory")
     parser.add_argument("--dataset-name", type=str, default="obd_sample", help="Dataset name")
 
     args = parser.parse_args()

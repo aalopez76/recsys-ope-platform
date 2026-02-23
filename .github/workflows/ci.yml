@@ -35,4 +35,4 @@ jobs:
         run: ruff check src/ tests/ --output-format=github
 
       - name: Format check (black)
-        run: black --check src/ tests/ --line-length 100
+        run: black --check src/ tests/ --line-length 120

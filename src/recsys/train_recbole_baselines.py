@@ -68,19 +68,11 @@ def run_baseline(model_name: str, config_file: str) -> dict[str, Any]:
 
 def main():
     parser = argparse.ArgumentParser(description="Train RecBole Baselines")
-    parser.add_argument(
-        "--models", type=str, default=",".join(MODELS), help="Comma-separated models"
-    )
-    parser.add_argument(
-        "--config", type=str, default="configs/recbole.yaml", help="Path to config file"
-    )
+    parser.add_argument("--models", type=str, default=",".join(MODELS), help="Comma-separated models")
+    parser.add_argument("--config", type=str, default="configs/recbole.yaml", help="Path to config file")
     parser.add_argument("--sample-dir", type=str, default="data/sample", help="Input sample dir")
-    parser.add_argument(
-        "--out-dir", type=str, default="reports/tables", help="Output directory for tables"
-    )
-    parser.add_argument(
-        "--plots-dir", type=str, default="reports/plots", help="Output directory for plots"
-    )
+    parser.add_argument("--out-dir", type=str, default="reports/tables", help="Output directory for tables")
+    parser.add_argument("--plots-dir", type=str, default="reports/plots", help="Output directory for plots")
 
     args = parser.parse_args()
 

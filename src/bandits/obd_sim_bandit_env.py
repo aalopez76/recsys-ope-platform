@@ -38,9 +38,7 @@ class OBDSimBanditEnv(bandit_py_environment.BanditPyEnvironment):
         self._rng = np.random.RandomState(seed)
         self._current_context: np.ndarray | None = None
 
-        observation_spec = array_spec.ArraySpec(
-            shape=(contexts.shape[1],), dtype=np.float32, name="observation"
-        )
+        observation_spec = array_spec.ArraySpec(shape=(contexts.shape[1],), dtype=np.float32, name="observation")
         action_spec = array_spec.BoundedArraySpec(
             shape=(), dtype=np.int32, minimum=0, maximum=self._n_actions - 1, name="action"
         )

@@ -29,9 +29,7 @@ from src.data.privacy import PrivacyPolicy
 from src.data.validate_schema import SchemaValidator
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Paths
@@ -122,9 +120,7 @@ def copy_sample_data_if_needed(raw_dir: Path) -> None:
             logger.warning("Sample dataset not found in obp package.")
 
 
-def load_obd_dataset(
-    config: dict[str, Any], raw_dir: Path
-) -> tuple[OpenBanditDataset, dict[str, Any]]:
+def load_obd_dataset(config: dict[str, Any], raw_dir: Path) -> tuple[OpenBanditDataset, dict[str, Any]]:
     """Load Open Bandit Dataset via OBP."""
     logger.info("Loading Open Bandit Dataset...")
 
@@ -137,9 +133,7 @@ def load_obd_dataset(
     )
 
     bandit_feedback = dataset.obtain_batch_bandit_feedback()
-    logger.info(
-        f"Dataset loaded: {bandit_feedback['n_rounds']} rounds, {bandit_feedback['n_actions']} actions"
-    )
+    logger.info(f"Dataset loaded: {bandit_feedback['n_rounds']} rounds, {bandit_feedback['n_actions']} actions")
 
     return dataset, bandit_feedback
 
@@ -210,9 +204,7 @@ def is_identity_action_map(action_id_map: dict[Any, Any], n_actions: int) -> boo
     return True
 
 
-def generate_split_manifest(
-    n_rounds: int, config: dict[str, Any], paths: dict[str, Path]
-) -> dict[str, Any]:
+def generate_split_manifest(n_rounds: int, config: dict[str, Any], paths: dict[str, Path]) -> dict[str, Any]:
     """Generate deterministic train/val/test splits.
 
     Split strategy:
@@ -235,9 +227,7 @@ def generate_split_manifest(
     val_size = config["dataset"]["val_size"]  # Fraction of train data
     seed = config["dataset"]["random_state"]
 
-    logger.info(
-        f"Generating split manifest: strategy={split_strategy}, test_size={test_size}, val_size={val_size}"
-    )
+    logger.info(f"Generating split manifest: strategy={split_strategy}, test_size={test_size}, val_size={val_size}")
 
     # Calculate split sizes
     n_test = int(n_rounds * test_size)
@@ -318,9 +308,7 @@ def generate_split_manifest(
         json_manifest["val_idx_preview"] = val_idx[:100].tolist()
         json_manifest["test_idx_preview"] = test_idx[:100].tolist()
         json_manifest["mode"] = "full"
-        json_manifest["note"] = (
-            "Preview only - first 100 indices of each split. Full indices in split_manifest.npz"
-        )
+        json_manifest["note"] = "Preview only - first 100 indices of each split. Full indices in split_manifest.npz"
         json_filename = "split_manifest_preview.json"
         logger.info("Full mode detected: saving preview (first 100 indices) to JSON")
 
@@ -385,9 +373,7 @@ def save_bandit_feedback(
         json.dump(action_map, f, indent=2)
 
     # Determine if action map is truly identity
-    is_identity = is_identity_action_map(
-        bandit_feedback["action_id_map"], bandit_feedback["n_actions"]
-    )
+    is_identity = is_identity_action_map(bandit_feedback["action_id_map"], bandit_feedback["n_actions"])
 
     # Save metadata with all required fields
     metadata = {
@@ -456,11 +442,7 @@ def generate_recbole_files(
     context_df["user_id"] = user_ids
 
     # Deduplicate and sort for deterministic ordering
-    df_user = (
-        context_df.drop_duplicates(subset=["user_id"], keep="first")
-        .sort_values("user_id")
-        .reset_index(drop=True)
-    )
+    df_user = context_df.drop_duplicates(subset=["user_id"], keep="first").sort_values("user_id").reset_index(drop=True)
 
     out_user = paths["recbole"] / "obd.user"
     with open(out_user, "w", encoding="utf-8") as f:
@@ -512,9 +494,7 @@ def generate_recbole_files(
         logger.info("No action_context found, skipping obd.item generation.")
 
 
-def save_audit_csv(
-    bandit_feedback: dict[str, Any], paths: dict[str, Path], config: dict[str, Any]
-) -> None:
+def save_audit_csv(bandit_feedback: dict[str, Any], paths: dict[str, Path], config: dict[str, Any]) -> None:
     """Save audit CSV if enabled."""
     if not config["processing"].get("export_csv", False):
         return

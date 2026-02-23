@@ -46,9 +46,7 @@ logger = logging.getLogger(__name__)
 class OBDEnv:
     """Pure-numpy bandit environment backed by trained sklearn reward model."""
 
-    def __init__(
-        self, model_path: str, action_context: np.ndarray, contexts: np.ndarray, seed: int
-    ):
+    def __init__(self, model_path: str, action_context: np.ndarray, contexts: np.ndarray, seed: int):
         self._model = joblib.load(model_path)
         self._action_context = action_context.astype(np.float32)
         self._contexts = contexts.astype(np.float32)
@@ -181,9 +179,7 @@ def train_agent(agent_name: str, agent, env: OBDEnv, steps: int) -> tuple[list[f
 # ---------------------------------------------------------------------------
 
 
-def _plot_training_curves(
-    histories: dict[str, list[float]], plots_dir: str, window: int = 100
-) -> None:
+def _plot_training_curves(histories: dict[str, list[float]], plots_dir: str, window: int = 100) -> None:
     fig, ax = plt.subplots(figsize=(12, 6))
     colors = {"LinUCB": "#2196F3", "EpsGreedy": "#4CAF50"}
     for agent_name, rewards in histories.items():
@@ -316,9 +312,7 @@ def run_training(
 
     Path(plots_dir).mkdir(parents=True, exist_ok=True)
     _plot_training_curves(histories, plots_dir)
-    _write_summary(
-        report_path, histories, train_times, steps, epsilon, seed, n_actions, context_dim
-    )
+    _write_summary(report_path, histories, train_times, steps, epsilon, seed, n_actions, context_dim)
 
     logger.info("Training complete.")
 

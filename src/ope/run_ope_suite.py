@@ -46,15 +46,11 @@ def load_bandit_feedback(npz_path: str) -> dict[str, Any]:
         "n_actions": int(d["action_context"].shape[0]),
         "action_context": d["action_context"],
         "position": (
-            d["position"].astype(int)
-            if "position" in d.files
-            else np.zeros(d["context"].shape[0], dtype=int)
+            d["position"].astype(int) if "position" in d.files else np.zeros(d["context"].shape[0], dtype=int)
         ),
     }
     logger.info(f"  n_rounds={bf['n_rounds']}, n_actions={bf['n_actions']}")
-    logger.info(
-        f"  mean_reward={bf['reward'].mean():.6f}, pscore=[{bf['pscore'].min():.4f},{bf['pscore'].max():.4f}]"
-    )
+    logger.info(f"  mean_reward={bf['reward'].mean():.6f}, pscore=[{bf['pscore'].min():.4f},{bf['pscore'].max():.4f}]")
     return bf
 
 
@@ -103,9 +99,7 @@ def get_action_dist_uniform(bf_slice: dict[str, Any]) -> np.ndarray:
     return np.full((n, n_a, 1), 1.0 / n_a, dtype=float)
 
 
-def get_action_dist_topk(
-    bf_train: dict[str, Any], bf_test: dict[str, Any], temperature: float = 0.1
-) -> np.ndarray:
+def get_action_dist_topk(bf_train: dict[str, Any], bf_test: dict[str, Any], temperature: float = 0.1) -> np.ndarray:
     """
     RecboleTopK: popularity-based policy derived from train click CTR.
     Softmax with low temperature for near-deterministic top-1 behavior.
@@ -171,9 +165,7 @@ def dr_estimate(bf: dict[str, Any], action_dist: np.ndarray, clip: float) -> flo
 # ---------------------------------------------------------------------------
 
 
-def compute_weight_diagnostics(
-    bf: dict[str, Any], action_dist: np.ndarray, clip: float
-) -> dict[str, float]:
+def compute_weight_diagnostics(bf: dict[str, Any], action_dist: np.ndarray, clip: float) -> dict[str, float]:
     """
     Compute importance weight diagnostics for a given policy and clip level.
     Returns: ess, w_p50, w_p90, w_p99, w_max, pct_pscore_below_clip, pct_rounds_clipped
@@ -221,10 +213,7 @@ def bootstrap_estimate(
     estimates = []
     for _ in range(n_bootstrap):
         idx = rng.choice(n, size=n, replace=True)
-        bf_b = {
-            k: bf[k][idx] if isinstance(bf[k], np.ndarray) and len(bf[k]) == n else bf[k]
-            for k in bf
-        }
+        bf_b = {k: bf[k][idx] if isinstance(bf[k], np.ndarray) and len(bf[k]) == n else bf[k] for k in bf}
         bf_b["n_rounds"] = n
         ad_b = action_dist[idx]
         estimates.append(estimator_fn(bf_b, ad_b, clip))
@@ -313,9 +302,7 @@ def run_ope(
 
     # Add external policy if provided
     if external_policy_csv and Path(external_policy_csv).exists():
-        policies[external_policy_name] = load_external_policy(
-            external_policy_csv, bf_test, test_idx
-        )
+        policies[external_policy_name] = load_external_policy(external_policy_csv, bf_test, test_idx)
 
     estimators: dict[str, Callable] = {
         "IPS": ips_estimate,
@@ -328,9 +315,7 @@ def run_ope(
     for policy_name, action_dist in policies.items():
         for est_name, est_fn in estimators.items():
             for c in clip_values:
-                mean_val, ci_low, ci_high = bootstrap_estimate(
-                    bf_test, action_dist, est_fn, c, n_bootstrap, seed
-                )
+                mean_val, ci_low, ci_high = bootstrap_estimate(bf_test, action_dist, est_fn, c, n_bootstrap, seed)
                 diag = compute_weight_diagnostics(bf_test, action_dist, c)
                 rows.append(
                     {
@@ -406,18 +391,12 @@ def _plot_value_by_policy(df: pd.DataFrame, plots_dir: str, clip: float) -> None
         ax.errorbar(x + i * width, vals, yerr=errs, fmt="none", color="black", capsize=4, lw=1.5)
 
     on_pol = df_c["on_policy_value"].iloc[0]
-    ax.axhline(
-        on_pol, color="red", linestyle="--", linewidth=1.5, label=f"on_policy_value={on_pol:.4f}"
-    )
+    ax.axhline(on_pol, color="red", linestyle="--", linewidth=1.5, label=f"on_policy_value={on_pol:.4f}")
     ax.set_xlabel("Policy", fontsize=12)
     ax.set_ylabel("Estimated Value (CTR)", fontsize=12)
-    ax.set_title(
-        f"OPE Value by Policy (clip={clip}, n_bootstrap=200)", fontsize=13, fontweight="bold"
-    )
+    ax.set_title(f"OPE Value by Policy (clip={clip}, n_bootstrap=200)", fontsize=13, fontweight="bold")
     ax.set_xticks(x + width)
-    ax.set_xticklabels(
-        [p.replace(" (diagnostic)", "\n(diagnostic)") for p in policies], fontsize=10
-    )
+    ax.set_xticklabels([p.replace(" (diagnostic)", "\n(diagnostic)") for p in policies], fontsize=10)
     ax.legend(title="Estimator", fontsize=9)
     ax.grid(axis="y", linestyle="--", alpha=0.5)
     ax.spines["top"].set_visible(False)
@@ -489,9 +468,7 @@ def _plot_weight_diagnostics(df: pd.DataFrame, plots_dir: str) -> None:
     clip_values = sorted(df["clip"].unique())
 
     for i, c in enumerate(clip_values):
-        df_c = (
-            df[df["clip"] == c].groupby("policy_name")[["ess", "w_p99"]].first().reindex(policies)
-        )
+        df_c = df[df["clip"] == c].groupby("policy_name")[["ess", "w_p99"]].first().reindex(policies)
         ess_vals = df_c["ess"].values
         w99_vals = df_c["w_p99"].values
         ax_ess.bar(
@@ -594,11 +571,7 @@ def _write_report(
         "pct_pscore_below_clip",
         "pct_rounds_clipped",
     ]
-    diag_df = (
-        df[diag_cols]
-        .drop_duplicates(subset=["policy_name", "clip"])
-        .sort_values(["policy_name", "clip"])
-    )
+    diag_df = df[diag_cols].drop_duplicates(subset=["policy_name", "clip"]).sort_values(["policy_name", "clip"])
     diag_md = diag_df.rename(
         columns={
             "policy_name": "Policy",
@@ -610,9 +583,7 @@ def _write_report(
 
     # Sanity check
     realized_ips = df[
-        (df["policy_name"].str.startswith("Realized"))
-        & (df["estimator"] == "IPS")
-        & (df["clip"] == clip)
+        (df["policy_name"].str.startswith("Realized")) & (df["estimator"] == "IPS") & (df["clip"] == clip)
     ]
     sanity_val = realized_ips["value_hat"].iloc[0] if len(realized_ips) > 0 else float("nan")
     sanity_diff = abs(sanity_val - on_policy_value)

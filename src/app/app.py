@@ -209,9 +209,7 @@ elif page == "📈 RecBole Baselines":
             st.pyplot(fig)
             plt.close()
     else:
-        show_missing(
-            "recbole_baselines_sample.csv", "Run: `python -m src.recsys.train_recbole_baselines`"
-        )
+        show_missing("recbole_baselines_sample.csv", "Run: `python -m src.recsys.train_recbole_baselines`")
 
     # NDCG plot
     st.subheader("📊 NDCG@10 Plot (saved)")
@@ -225,9 +223,7 @@ elif page == "📈 RecBole Baselines":
         with st.expander("Show audit report", expanded=False):
             st.markdown(txt[:3000] + ("\n\n_[truncated]_" if len(txt) > 3000 else ""))
     else:
-        show_missing(
-            "recbole_baselines_audit_report.md", "Run: `python scripts/audit_recbole_contract.py`"
-        )
+        show_missing("recbole_baselines_audit_report.md", "Run: `python scripts/audit_recbole_contract.py`")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -244,13 +240,8 @@ elif page == "🎯 OPE Suite":
     if df is None:
         show_missing("ope_results_sample.csv", "Run: `python -m src.ope.run_ope_suite`")
     else:
-        source = (
-            "ope_results_with_tf_agents.csv" if df_ext is not None else "ope_results_sample.csv"
-        )
-        st.info(
-            f"Loaded: `{source}` "
-            f"({len(df)} rows, {df['policy_name'].nunique()} policies)"
-        )
+        source = "ope_results_with_tf_agents.csv" if df_ext is not None else "ope_results_sample.csv"
+        st.info(f"Loaded: `{source}` " f"({len(df)} rows, {df['policy_name'].nunique()} policies)")
 
         # Filters
         col_f1, col_f2, col_f3 = st.columns(3)
@@ -262,11 +253,7 @@ elif page == "🎯 OPE Suite":
         sel_estimators = col_f2.multiselect("Estimator", estimators, default=estimators)
         sel_clips = col_f3.multiselect("Clip", clips, default=[0.01])
 
-        mask = (
-            df["policy_name"].isin(sel_policies)
-            & df["estimator"].isin(sel_estimators)
-            & df["clip"].isin(sel_clips)
-        )
+        mask = df["policy_name"].isin(sel_policies) & df["estimator"].isin(sel_estimators) & df["clip"].isin(sel_clips)
         df_filt = df[mask].copy()
 
         st.subheader("📋 OPE Results Table")
@@ -294,17 +281,11 @@ elif page == "🎯 OPE Suite":
                         width=0.7,
                         label=policy if j == 0 else "",
                     )
-                    ax.errorbar(
-                        x_pos, v, yerr=[[v - lo], [hi - v]], fmt="none", color="black", capsize=4
-                    )
+                    ax.errorbar(x_pos, v, yerr=[[v - lo], [hi - v]], fmt="none", color="black", capsize=4)
 
-            on_pol = (
-                df_filt["on_policy_value"].iloc[0] if "on_policy_value" in df_filt.columns else None
-            )
+            on_pol = df_filt["on_policy_value"].iloc[0] if "on_policy_value" in df_filt.columns else None
             if on_pol is not None:
-                ax.axhline(
-                    on_pol, color="red", linestyle="--", lw=1.5, label=f"on_policy={on_pol:.4f}"
-                )
+                ax.axhline(on_pol, color="red", linestyle="--", lw=1.5, label=f"on_policy={on_pol:.4f}")
             ax.set_ylabel("value_hat (CTR)", fontsize=11)
             ax.set_title(f"OPE Values — clip={sel_clips[0]}", fontsize=12, fontweight="bold")
             ax.legend(fontsize=8, loc="upper right")
@@ -330,11 +311,7 @@ elif page == "🎯 OPE Suite":
                 "pct_rounds_clipped",
             ]
             avail = [c for c in diag_cols if c in df.columns]
-            diag_df = (
-                df[avail]
-                .drop_duplicates(subset=["policy_name", "clip"])
-                .sort_values(["policy_name", "clip"])
-            )
+            diag_df = df[avail].drop_duplicates(subset=["policy_name", "clip"]).sort_values(["policy_name", "clip"])
             st.dataframe(diag_df, use_container_width=True, hide_index=True)
 
         # Saved plots
@@ -377,9 +354,7 @@ elif page == "🤖 Bandits & Policy":
         # Histogram of pi_e
         st.subheader("📊 Distribution of pi_e (logged action)")
         fig, ax = plt.subplots(figsize=(8, 4))
-        ax.hist(
-            pol_df["pi_e_logged_action"], bins=30, color="#2196F3", edgecolor="white", alpha=0.85
-        )
+        ax.hist(pol_df["pi_e_logged_action"], bins=30, color="#2196F3", edgecolor="white", alpha=0.85)
         ax.axvline(
             pol_df["pi_e_logged_action"].mean(),
             color="red",
@@ -414,9 +389,7 @@ elif page == "🤖 Bandits & Policy":
     df_comparison = load_csv(TABLES / "ope_results_with_tf_agents.csv")
     if df_comparison is not None:
         df_c = df_comparison[df_comparison["clip"] == 0.01]
-        pivot = df_c.pivot_table(
-            index="policy_name", columns="estimator", values="value_hat"
-        ).reset_index()
+        pivot = df_c.pivot_table(index="policy_name", columns="estimator", values="value_hat").reset_index()
         st.dataframe(pivot, use_container_width=True, hide_index=True)
 
         st.subheader("📊 OPE with TFAgent — Training Curve")
@@ -435,9 +408,7 @@ elif page == "🤖 Bandits & Policy":
         txt = ts_path.read_text(encoding="utf-8", errors="replace")
         st.markdown(txt[:3000])
     else:
-        show_missing(
-            "tf_agents_training_summary.md", "Run: `python -m src.bandits.train_tf_agents`"
-        )
+        show_missing("tf_agents_training_summary.md", "Run: `python -m src.bandits.train_tf_agents`")
 
     # Reward model metrics
     st.subheader("🎯 Reward Model Metrics")
