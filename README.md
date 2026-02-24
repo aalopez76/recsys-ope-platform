@@ -43,7 +43,7 @@ data/sample/ (SSOT — versioned)
 .
 ├── configs/                         # YAML configs (versioned)
 │   ├── data_config.yaml
-│   └── recbole_config.yaml
+│   └── recbole.yaml
 │
 ├── data/
 │   └── sample/                      # ✅ Versioned sample package
@@ -94,7 +94,7 @@ data/sample/ (SSOT — versioned)
 
 ```powershell
 # 1. Activate virtual environment
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
 
 # 2. Run tests
 python -m pytest tests/data -q

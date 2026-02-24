@@ -5,9 +5,7 @@ from src.data.build_obd_datasets import generate_split_manifest
 
 def test_split_manifest_reproducible_hash(tmp_path):
     """Test that split manifest generates identical hash across runs."""
-    config = {
-        "dataset": {"split_strategy": "time", "test_size": 0.3, "val_size": 0.1, "random_state": 42}
-    }
+    config = {"dataset": {"split_strategy": "time", "test_size": 0.3, "val_size": 0.1, "random_state": 42}}
 
     paths = {"splits": tmp_path / "splits", "bandit": tmp_path / "bandit"}
     paths["splits"].mkdir(parents=True)
@@ -26,9 +24,7 @@ def test_split_manifest_reproducible_hash(tmp_path):
 
 def test_split_manifest_deterministic_indices(tmp_path):
     """Test that split indices are deterministic."""
-    config = {
-        "dataset": {"split_strategy": "time", "test_size": 0.3, "val_size": 0.1, "random_state": 42}
-    }
+    config = {"dataset": {"split_strategy": "time", "test_size": 0.3, "val_size": 0.1, "random_state": 42}}
 
     paths = {"splits": tmp_path / "splits", "bandit": tmp_path / "bandit"}
     paths["splits"].mkdir(parents=True)

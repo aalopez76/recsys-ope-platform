@@ -80,7 +80,8 @@ with st.sidebar:
 # ═══════════════════════════════════════════════════════════════════════════════
 if page == "🏠 Overview":
     st.title("🏠 Project Overview")
-    st.markdown("""
+    st.markdown(
+        """
     This platform evaluates recommendation system policies using **Off-Policy Evaluation (OPE)**
     on the Open Bandit Dataset (OBD). It combines **RecBole collaborative filtering baselines**
     (Pop, BPR, NeuMF, LightGCN) with **contextual bandit agents** (LinUCB, EpsilonGreedy)
@@ -89,7 +90,8 @@ if page == "🏠 Overview":
     All evaluations use *only* the `data/sample/` package — no raw dataset downloads required.
     Reproducibility is enforced via `split_manifest_sample.npz` as the single source of truth
     for train/val/test splits.
-    """)
+    """
+    )
 
     st.subheader("📐 Dataset KPIs")
     meta = load_json(SAMPLE / "metadata_sample.json")
@@ -344,12 +346,14 @@ elif page == "🤖 Bandits & Policy":
         cm2.metric("Policy/Log Agreement", f"{agreement*100:.1f}%")
         cm3.metric("Rounds where pi_e > 0.5", f"{pct_greedy*100:.1f}%")
 
-        st.markdown("""
+        st.markdown(
+            """
         **Interpretation**: The bandit policy (greedy on predicted CTR) selects a *different* item
         than the behavior logging policy in ~99% of rounds. This low **support/coverage**
         causes IPS/SNIPS estimators to produce near-zero estimates because the importance
         weights `pi_e(a|x) / pi_b(a|x)` are extremely small for all non-agreement rounds.
-        """)
+        """
+        )
 
         # Histogram of pi_e
         st.subheader("📊 Distribution of pi_e (logged action)")
@@ -421,7 +425,8 @@ elif page == "🤖 Bandits & Policy":
         show_missing("reward_model_metrics.md", "Run: `python -m src.bandits.reward_model`")
 
     st.subheader("📢 Key Finding: Support Problem")
-    st.error("""
+    st.error(
+        """
     **Why IPS/SNIPS(TFAgent) ≈ 0?**
 
     The TFAgent's greedy policy selects items with *high predicted CTR*, but the logging policy
@@ -431,4 +436,5 @@ elif page == "🤖 Bandits & Policy":
 
     **Solution for production**: Use an exploration policy with explicit overlap with the target
     policy (e.g., mix 30% random + 70% greedy), or use DR with a strong direct model.
-    """)
+    """
+    )

@@ -65,8 +65,7 @@ class TestBanditFeedbackShapes:
     def test_n_rounds_matches_metadata(self, bandit_feedback: dict, metadata: dict) -> None:
         n_rounds = metadata["n_rounds"]
         assert bandit_feedback["reward"].shape[0] == n_rounds, (
-            f"reward has {bandit_feedback['reward'].shape[0]} rows, "
-            f"metadata says n_rounds={n_rounds}"
+            f"reward has {bandit_feedback['reward'].shape[0]} rows, " f"metadata says n_rounds={n_rounds}"
         )
 
     def test_context_rows_match_n_rounds(self, bandit_feedback: dict, metadata: dict) -> None:
@@ -87,14 +86,8 @@ class TestSplitManifestConsistency:
             assert key in split_manifest, f"Missing split key: {key}"
 
     def test_total_equals_n_rounds(self, split_manifest: dict, metadata: dict) -> None:
-        total = (
-            len(split_manifest["train_idx"])
-            + len(split_manifest["val_idx"])
-            + len(split_manifest["test_idx"])
-        )
-        assert (
-            total == metadata["n_rounds"]
-        ), f"Split total {total} != n_rounds {metadata['n_rounds']}"
+        total = len(split_manifest["train_idx"]) + len(split_manifest["val_idx"]) + len(split_manifest["test_idx"])
+        assert total == metadata["n_rounds"], f"Split total {total} != n_rounds {metadata['n_rounds']}"
 
     def test_split_counts_match_metadata(self, split_manifest: dict, metadata: dict) -> None:
         sc = metadata["split_counts"]
@@ -126,9 +119,7 @@ class TestRecBoleAtomicSample:
         # user_id + c0..c19 = 21 columns
         assert len(cols) == 21, f"Expected 21 columns (user_id + c0..c19), got {len(cols)}: {cols}"
         feature_cols = [c for c in cols if c.startswith("c") and ":float" in c]
-        assert (
-            len(feature_cols) == 20
-        ), f"Expected 20 feature columns c0..c19, got {len(feature_cols)}"
+        assert len(feature_cols) == 20, f"Expected 20 feature columns c0..c19, got {len(feature_cols)}"
 
     def test_obd_item_has_5_feature_columns(self) -> None:
         path = SAMPLE_DIR / "obd_sample.item"
