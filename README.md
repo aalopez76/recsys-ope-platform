@@ -1,5 +1,7 @@
 # RecSys OPE Platform
 
+[![CI](https://github.com/aalopez76/recsys-ope-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/aalopez76/recsys-ope-platform/actions/workflows/ci.yml)
+
 > **End-to-end platform comparing RecBole collaborative filtering vs. contextual bandits with Off-Policy Evaluation — Certification Grade**
 
 ---
