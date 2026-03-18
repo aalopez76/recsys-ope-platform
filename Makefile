@@ -1,33 +1,32 @@
-.PHONY: help setup data train_recbole reward_model bandits ope ope_full app test lint clean clean-dry
+.PHONY: help setup data train_recbole reward_model bandits train_rl load_data ope ope_full app test lint clean clean-dry
 
 # Default target
 help:
-	@echo "RecSys OPE Platform - Makefile Targets"
-	@echo "======================================"
+	@echo "RecSys OPE Platform v2.0 - Makefile Targets"
+	@echo "============================================"
 	@echo ""
 	@echo "Setup & Environment:"
-	@echo "  make setup          - Install all dependencies (production + dev)"
+	@echo "  make setup                    - Install all dependencies (production + dev)"
 	@echo ""
 	@echo "Data Preparation:"
-	@echo "  make data           - Download and prepare OBD dataset"
+	@echo "  make data                     - Build OBD artifacts"
+	@echo "  make load_data dataset=<name> - Load dataset (synthetic|obd|movielens)"
 	@echo ""
 	@echo "Training:"
-	@echo "  make train_recbole  - Train RecBole recommendation models (Pop/BPR/NeuMF/LightGCN)"
-	@echo "  make reward_model   - Train click reward model (sklearn logistic)"
-	@echo "  make bandits        - Train bandit agents + export OPE policy"
+	@echo "  make train_recbole            - Train RecBole baselines"
+	@echo "  make reward_model             - Train click reward model"
+	@echo "  make bandits                  - Train bandit agents (LinUCB+EpsGreedy)"
+	@echo "  make train_rl agent_type=dqn  - Train RL agent (linucb|epsgreedy|dqn|ppo)"
 	@echo ""
 	@echo "Evaluation:"
-	@echo "  make ope            - Run Off-Policy Evaluation on trained models"
-	@echo ""
-	@echo "Reporting:"
-	@echo "  make report         - Generate comparison reports (tables + plots)"
+	@echo "  make ope                      - Off-Policy Evaluation (all estimators)"
 	@echo ""
 	@echo "Quality & Testing:"
-	@echo "  make test           - Run pytest unit tests with coverage"
-	@echo "  make lint           - Run ruff and black for code quality"
+	@echo "  make test                     - Run all pytest tests with coverage"
+	@echo "  make lint                     - Run ruff + black + mypy"
 	@echo ""
 	@echo "Maintenance:"
-	@echo "  make clean          - Remove generated files and cache"
+	@echo "  make clean                    - Remove generated files and cache"
 
 # Install dependencies
 setup:
@@ -87,10 +86,30 @@ app:
 report: ope_full
 	@echo "All reports in reports/tables/ and reports/plots/"
 
-# Run tests
+# Train RL agent (v2.0) — replaces/extends bandits target
+# Usage: make train_rl agent_type=dqn steps=5000
+agent_type ?= dqn
+steps ?= 5000
+train_rl: reward_model
+	@echo "Training RL agent ($(agent_type)) for $(steps) steps..."
+	python -m src.rl_agents.train_rl \
+		--agent-type $(agent_type) \
+		--steps $(steps) \
+		--seed 42
+	@echo "Training complete! Reports in reports/tables/ and reports/plots/"
+
+# Load / inspect a dataset
+# Usage: make load_data dataset=obd
+dataset ?= synthetic
+load_data:
+	@echo "Loading dataset: $(dataset)..."
+	python -m src.data.data_loader --dataset $(dataset)
+	@echo "Done."
+
+# Run tests (all suites)
 test:
-	@echo "Running pytest on tests/data..."
-	pytest tests/data -q
+	@echo "Running all pytest tests with coverage..."
+	pytest tests/ -q --cov=src --cov-report=term-missing
 	@echo "Tests complete!"
 
 # Lint and format code
