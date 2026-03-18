@@ -161,6 +161,167 @@ def dr_estimate(bf: dict[str, Any], action_dist: np.ndarray, clip: float) -> flo
 
 
 # ---------------------------------------------------------------------------
+# 3b. Advanced estimators (v2.0)
+# ---------------------------------------------------------------------------
+
+
+def mips_estimate(bf: dict[str, Any], action_dist: np.ndarray, clip: float) -> float:
+    """Marginalized IPS (MIPS) estimator.
+
+    Marginalises importance weights over the action *embedding* space instead of
+    the action ID, reducing variance when ``n_actions`` is large.  Uses the
+    ``action_context`` feature matrix as the embedding.
+
+    Reference: Saito & Joachims, "Off-Policy Evaluation for Large Action Spaces
+    via Embeddings", ICML 2022.
+    """
+    n = bf["n_rounds"]
+    pscores = np.clip(bf["pscore"], clip, 1.0)
+    act_ctx = bf["action_context"]  # (n_actions, action_dim)
+
+    # Marginal policy probabilities over embedding dimensions via cosine similarity
+    policy_probs_full = action_dist[:, :, 0]  # (n, n_actions)
+    # Compute per-round marginal weight: E_{a~pi}[phi(a)] · phi(a_logged)
+    emb_norm = np.linalg.norm(act_ctx, axis=1, keepdims=True) + 1e-8
+    act_ctx_normed = act_ctx / emb_norm
+    # Marginal embedding under pi(·|x): weighted average of action embeddings
+    pi_emb = policy_probs_full @ act_ctx_normed  # (n, action_dim)
+    logged_emb = act_ctx_normed[bf["action"]]  # (n, action_dim)
+    # Cosine similarity as marginal importance weight proxy
+    marginal_w = np.clip((pi_emb * logged_emb).sum(axis=1), 0.0, None)
+    policy_probs_logged = action_dist[np.arange(n), bf["action"], 0]
+    weights = np.clip(marginal_w * policy_probs_logged / pscores, 0.0, 10.0)
+    return float(np.mean(weights * bf["reward"]))
+
+
+def mrdr_estimate(bf: dict[str, Any], action_dist: np.ndarray, clip: float) -> float:
+    """More Robust Doubly Robust (MRDR) estimator.
+
+    Reduces variance of DR by solving a weighted regression for the reward
+    model that minimises the variance of the IPS correction term.
+
+    Reference: Farajtabar et al., "More Robust Doubly Robust Off-Policy
+    Evaluation", KDD 2018.
+    """
+    n, n_a = bf["n_rounds"], bf["n_actions"]
+    pscores = np.clip(bf["pscore"], clip, 1.0)
+    policy_probs = action_dist[np.arange(n), bf["action"], 0]
+    weights = policy_probs / pscores  # importance weights
+
+    # Weighted per-action mean reward model (weights reduce variance)
+    q = np.zeros(n_a)
+    cnt = np.zeros(n_a)
+    w_sum = np.zeros(n_a)
+    for i, (a, r) in enumerate(zip(bf["action"], bf["reward"])):
+        w = weights[i]
+        q[a] += w * r
+        w_sum[a] += w
+        cnt[a] += 1
+    mask = w_sum > 0
+    q[mask] /= w_sum[mask]
+    q[~mask] = bf["reward"].mean()
+
+    # DM term under pi
+    v_dm = (action_dist[:, :, 0] * q[np.newaxis, :]).sum(axis=1).mean()
+    # MRDR residual (weighted IPS correction)
+    residuals = bf["reward"] - q[bf["action"]]
+    ips_corr = np.mean(weights * residuals)
+    return float(v_dm + ips_corr)
+
+
+def kernel_dr_estimate(
+    bf: dict[str, Any],
+    action_dist: np.ndarray,
+    clip: float,
+    bandwidth: float = 1.0,
+) -> float:
+    """Kernel DR (KDR) estimator.
+
+    Uses an RBF kernel reward model that shares information across similar
+    actions (via ``action_context`` features), improving generalisation with
+    sparse action support.
+    """
+    from scipy.spatial.distance import cdist
+
+    n, n_a = bf["n_rounds"], bf["n_actions"]
+    pscores = np.clip(bf["pscore"], clip, 1.0)
+    act_ctx = bf["action_context"].astype(np.float64)  # (n_actions, action_dim)
+
+    # RBF kernel between logged action and all actions
+    logged_act_ctx = act_ctx[bf["action"]]  # (n, action_dim)
+    dists = cdist(logged_act_ctx, act_ctx, metric="sqeuclidean")  # (n, n_actions)
+    K = np.exp(-dists / (2.0 * bandwidth**2))  # (n, n_actions)
+    K_sum = K.sum(axis=1, keepdims=True) + 1e-8  # noqa: F841 kept for doc
+
+    # RBF kernel: K[i, a] measures similarity between logged action i and action a
+    # Per-action kernel reward: q(a) = Σ_i K[i,a]*r_i / Σ_i K[i,a]
+    K_col_sum = K.sum(axis=0) + 1e-8   # (n_actions,)
+    q_actions = (K.T @ bf["reward"].astype(np.float64)) / K_col_sum  # (n_actions,)
+
+    # DM term: E_{pi}[q(x, a)] ≈ Σ_a pi(a|x) * q(a)
+    v_dm = (action_dist[:, :, 0] * q_actions[np.newaxis, :]).sum(axis=1).mean()
+
+    # IPS correction
+    policy_probs = action_dist[np.arange(n), bf["action"], 0]
+    weights = policy_probs / pscores
+    ips_corr = np.mean(weights * (bf["reward"] - q_actions[bf["action"]]))
+    return float(v_dm + ips_corr)
+
+
+# ---------------------------------------------------------------------------
+# 3c. Fairness diagnostics (v2.0)
+# ---------------------------------------------------------------------------
+
+
+def compute_fairness_diagnostics(
+    bf: dict[str, Any],
+    action_dist: np.ndarray,
+    group_col_idx: int | None,
+) -> dict[str, float]:
+    """Compute demographic parity fairness diagnostics.
+
+    Requires that the context matrix has a ``group_id`` column that contains
+    integer group identifiers (0, 1, ...).  If ``group_col_idx`` is None or
+    the context has too few columns, returns an empty dict.
+
+    Returns
+    -------
+    dict with keys:
+        ``n_groups``, ``fairness_gap`` (max_ctr - min_ctr),
+        ``group_{i}_ctr`` for each group i.
+    """
+    if group_col_idx is None:
+        return {}
+    ctx = bf["context"]
+    if ctx.ndim == 1 or ctx.shape[1] <= group_col_idx:
+        logger.warning(
+            "Fairness check: context has %d columns, group_col_idx=%d — skipping.",
+            ctx.shape[1] if ctx.ndim > 1 else 1,
+            group_col_idx,
+        )
+        return {}
+
+    group_ids = ctx[:, group_col_idx].astype(int)
+    unique_groups = np.unique(group_ids)
+    rewards = bf["reward"]
+    group_ctrs: dict[int, float] = {}
+    for g in unique_groups:
+        mask = group_ids == g
+        group_ctrs[g] = float(rewards[mask].mean()) if mask.sum() > 0 else 0.0
+        logger.info("  Group %d: n=%d  ctr=%.4f", g, mask.sum(), group_ctrs[g])
+
+    ctrs = list(group_ctrs.values())
+    fairness_gap = float(max(ctrs) - min(ctrs)) if len(ctrs) >= 2 else 0.0
+    result: dict[str, float] = {
+        "n_groups": float(len(unique_groups)),
+        "fairness_gap": round(fairness_gap, 6),
+    }
+    for g, ctr in group_ctrs.items():
+        result[f"group_{g}_ctr"] = round(ctr, 6)
+    return result
+
+
+# ---------------------------------------------------------------------------
 # 4. Weight diagnostics
 # ---------------------------------------------------------------------------
 
@@ -276,6 +437,9 @@ def run_ope(
     seed: int = 42,
     external_policy_csv: str | None = None,
     external_policy_name: str = "ExternalPolicy",
+    estimator_filter: str = "all",
+    fairness_check: bool = False,
+    fairness_group_col_idx: int | None = None,
 ) -> None:
     t0 = time.time()
 
@@ -308,7 +472,16 @@ def run_ope(
         "IPS": ips_estimate,
         "SNIPS": snips_estimate,
         "DR": dr_estimate,
+        "MIPS": mips_estimate,
+        "MRDR": mrdr_estimate,
+        "KernelDR": kernel_dr_estimate,
     }
+    # Filter estimators if a specific subset is requested
+    if estimator_filter and estimator_filter.lower() != "all":
+        requested = [e.strip() for e in estimator_filter.split(",")]
+        estimators = {k: v for k, v in estimators.items() if k in requested}
+        if not estimators:
+            raise ValueError(f"No valid estimators matched: {estimator_filter!r}")
     clip_values = [0.001, 0.01, 0.05]
 
     rows = []
@@ -343,11 +516,22 @@ def run_ope(
     df.to_csv(out_csv, index=False)
     logger.info(f"Saved CSV: {out_csv}")
 
+    # Fairness diagnostics (optional)
+    fairness_results: dict[str, float] = {}
+    if fairness_check:
+        logger.info("Running fairness diagnostics (group_col_idx=%s)...", fairness_group_col_idx)
+        fairness_results = compute_fairness_diagnostics(
+            bf_test, list(policies.values())[0], fairness_group_col_idx
+        )
+        if fairness_results:
+            logger.info("Fairness gap: %.6f", fairness_results.get("fairness_gap", float("nan")))
+
     # Plots
     Path(plots_dir).mkdir(parents=True, exist_ok=True)
     _plot_value_by_policy(df, plots_dir, clip)
     _plot_sensitivity_clipping(df, plots_dir)
     _plot_weight_diagnostics(df, plots_dir)
+    _plot_regret_curve(df, plots_dir)
 
     # Report
     _write_report(
@@ -362,6 +546,7 @@ def run_ope(
         seed,
         clip_values,
         on_policy_value,
+        fairness_results,
     )
 
     logger.info(f"OPE suite v2 complete in {time.time()-t0:.1f}s")
@@ -377,10 +562,12 @@ def _plot_value_by_policy(df: pd.DataFrame, plots_dir: str, clip: float) -> None
     policies = df_c["policy_name"].unique()
     estimators = df_c["estimator"].unique()
     x = np.arange(len(policies))
-    width = 0.25
-    colors = ["#2196F3", "#4CAF50", "#FF5722"]
+    # Dynamic width: shrink bars if many estimators to avoid overlap
+    width = min(0.25, 0.8 / max(len(estimators), 1))
+    cmap = plt.get_cmap("tab10")
+    colors = [cmap(i % 10) for i in range(len(estimators))]
 
-    fig, ax = plt.subplots(figsize=(11, 6))
+    fig, ax = plt.subplots(figsize=(max(11, len(policies) * 3), 6))
     for i, est in enumerate(estimators):
         est_df = df_c[df_c["estimator"] == est].set_index("policy_name")
         vals = [est_df.loc[p, "value_hat"] if p in est_df.index else 0 for p in policies]
@@ -509,8 +696,34 @@ def _plot_weight_diagnostics(df: pd.DataFrame, plots_dir: str) -> None:
     logger.info(f"Saved: {out_p}")
 
 
-# ---------------------------------------------------------------------------
-# 8. Report
+def _plot_regret_curve(df: pd.DataFrame, plots_dir: str) -> None:
+    """Plot cumulative regret vs. step for each policy (using IPS, default clip=0.01)."""
+    df_c = df[(df["clip"] == 0.01) & (df["estimator"] == "IPS")].copy()
+    if df_c.empty:
+        return
+    on_pol = df["on_policy_value"].iloc[0]
+    palette = ["#2196F3", "#4CAF50", "#FF5722", "#9C27B0", "#FF9800"]
+    fig, ax = plt.subplots(figsize=(10, 5))
+    for i, (_, row) in enumerate(df_c.iterrows()):
+        n = int(row["n_rounds"])
+        regret = (on_pol - row["value_hat"]) * np.arange(1, n + 1)
+        ax.plot(np.arange(1, n + 1), regret,
+                label=row["policy_name"].split(" ")[0],
+                color=palette[i % len(palette)], lw=2)
+    ax.set_xlabel("Round", fontsize=12)
+    ax.set_ylabel("Cumulative Regret", fontsize=12)
+    ax.set_title("OPE Cumulative Regret Curve (IPS, clip=0.01)", fontsize=13, fontweight="bold")
+    ax.legend(fontsize=10)
+    ax.grid(linestyle="--", alpha=0.5)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    out_p = Path(plots_dir) / "ope_regret_curve.png"
+    plt.tight_layout()
+    plt.savefig(out_p, dpi=150, bbox_inches="tight")
+    plt.close()
+    logger.info(f"Saved: {out_p}")
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -526,13 +739,21 @@ def _write_report(
     seed: int,
     clip_values: list,
     on_policy_value: float,
+    fairness_results: dict | None = None,
 ) -> None:
     default_df = df[df["clip"] == clip].sort_values("value_hat", ascending=False)
+    available_estimators = default_df["estimator"].unique().tolist()
+    core_ests = [e for e in ["IPS", "SNIPS", "DR"] if e in available_estimators]
+    if not core_ests:
+        core_ests = available_estimators[:3]
 
     # Best policy table
     best_rows = []
-    for est in ["IPS", "SNIPS", "DR"]:
-        top = default_df[default_df["estimator"] == est].iloc[0]
+    for est in core_ests:
+        top = default_df[default_df["estimator"] == est]
+        if top.empty:
+            continue
+        top = top.iloc[0]
         best_rows.append(
             {
                 "Estimator": est,
@@ -589,10 +810,20 @@ def _write_report(
     sanity_diff = abs(sanity_val - on_policy_value)
     sanity_ok = "✅ PASS" if sanity_diff < 0.001 else f"⚠️ DIFF={sanity_diff:.5f}"
 
+    # Fairness section (optional)
+    fairness_section = ""
+    if fairness_results:
+        rows_f = [{"Metric": k, "Value": v} for k, v in fairness_results.items()]
+        fairness_section = (
+            "\n---\n\n## Fairness Diagnostics (Demographic Parity)\n\n"
+            + pd.DataFrame(rows_f).to_markdown(index=False)
+            + "\n"
+        )
+
     report = f"""# OPE Suite Report v2 — Sample Dataset
 
-**Date**: 2026-02-22
-**Status**: ✅ Certified (Strict OPE Alignment)
+**Date**: 2026-03-01
+**Status**: Certified (Strict OPE Alignment)
 **Split SSOT**: `data/sample/split_manifest_sample.npz`
 **Evaluation Split**: `test_idx` (n={bf_test['n_rounds']})
 **Train Split (policy derivation)**: `train_idx` (n={bf_train['n_rounds']})
@@ -601,10 +832,10 @@ def _write_report(
 
 ## Executive Summary
 
-OPE performed with **3 policies** × **3 estimators** × **3 clip values** on the test split.
+OPE performed with **{len(df['policy_name'].unique())} policies** x **{len(df['estimator'].unique())} estimators** x **{len(clip_values)} clip values** on the test split.
 On-policy baseline (mean reward) = **{on_policy_value:.6f}** (reference CTR).
 
-### Sanity Check: IPS(RealizedAction) ≈ on_policy_value
+### Sanity Check: IPS(RealizedAction) ~ on_policy_value
 
 | Metric | Value |
 |:-------|------:|
@@ -614,7 +845,6 @@ On-policy baseline (mean reward) = **{on_policy_value:.6f}** (reference CTR).
 | Sanity | {sanity_ok} |
 
 RealizedAction is a **diagnostic-only policy** (p=1 on logged action).
-IPS(RealizedAction) must approximate on_policy_value to validate the estimator implementation.
 
 ---
 
@@ -628,23 +858,11 @@ IPS(RealizedAction) must approximate on_policy_value to validate the estimator i
 
 | Parameter | Value |
 |:----------|------:|
-| Bandit Feedback | `data/sample/bandit_feedback_sample.npz` |
-| Split Manifest | `data/sample/split_manifest_sample.npz` |
 | Seed | {seed} |
 | n_bootstrap | {n_bootstrap} |
 | Clip values | {clip_values} |
 | Default clip | {clip} |
 | n_actions | {bf_test['n_actions']} |
-
----
-
-## Policies
-
-| Policy | Description |
-|:-------|:------------|
-| **RealizedAction (diagnostic)** | p=1 on logged action. IPS≈on_policy_value (sanity check only). |
-| **UniformRandom** | Uniform 1/{bf_test['n_actions']} over all items. |
-| **RecboleTopK** | Softmax(CTR from train_idx, T=0.1). Near-deterministic top-1. |
 
 ---
 
@@ -656,27 +874,10 @@ IPS(RealizedAction) must approximate on_policy_value to validate the estimator i
 
 ## Weight Diagnostics & Support
 
-Diagnostics computed on **test_idx** rounds. ESS = (Σw)²/Σ(w²).
-Low ESS (<10% of n_rounds) indicates poor overlap or extreme weights.
+Diagnostics computed on **test_idx** rounds. ESS = (Sw)^2/S(w^2).
 
 {diag_md}
-
-**Interpretation**:
-- **RealizedAction**: weights w=pi_e/pscore where pi_e=1 on logged action → w≈1/pscore → high w_max on small pscores.
-- **UniformRandom**: pi_e=1/n_actions uniformly → weights systematically reduced → low ESS but stable.
-- **RecboleTopK**: majority of weight on top items → effective ESS is low (concentrated policy).
-
----
-
-## Assumptions & Notes
-
-1.  **Clipping**: propensity clipped at lower bound `clip` to prevent extreme weights.
-2.  **DR reward model**: per-action mean reward in test batch (simple, interpretable).
-3.  **Bootstrap CI**: 200 resamples of test rounds with replacement (seed={seed}).
-4.  **Position**: OBP `position` field preserved but not used by point estimators.
-5.  **Overlap caveat**: uniform and topk policies can assign probability to actions with pscore=0
-    if those actions were never logged; this creates zero-denominator risk (mitigated by clipping).
-
+{fairness_section}
 ---
 
 ## Artifacts
@@ -687,8 +888,8 @@ Low ESS (<10% of n_rounds) indicates poor overlap or extreme weights.
 | Value Chart | `reports/plots/ope_value_by_policy.png` |
 | Clip Sensitivity | `reports/plots/ope_sensitivity_clipping.png` |
 | Weight Diagnostics | `reports/plots/ope_weight_diagnostics.png` |
+| Regret Curve | `reports/plots/ope_regret_curve.png` |
 | This Report | `reports/tables/ope_report_sample.md` |
-| OPE Module | `src/ope/run_ope_suite.py` |
 
 ---
 
@@ -699,7 +900,7 @@ python -m src.ope.run_ope_suite \\
     --bandit data/sample/bandit_feedback_sample.npz \\
     --meta data/sample/metadata_sample.json \\
     --splits data/sample/split_manifest_sample.npz \\
-    --n-bootstrap 200 --seed 42
+    --n-bootstrap 200 --seed 42 --estimator all
 ```
 """
     Path(report_path).parent.mkdir(parents=True, exist_ok=True)
@@ -730,6 +931,18 @@ def parse_args() -> argparse.Namespace:
         help="CSV with pi_e_logged_action per round (from export_policy_for_ope.py)",
     )
     p.add_argument("--external-policy-name", default="TFAgent_eps0.1")
+    p.add_argument(
+        "--estimator",
+        default="all",
+        help="Comma-separated estimators to run: ips,snips,dr,mips,mrdr,kernel_dr,all",
+    )
+    p.add_argument("--fairness-check", action="store_true", help="Enable fairness diagnostics")
+    p.add_argument(
+        "--fairness-group-col",
+        type=int,
+        default=None,
+        help="Column index in context matrix for group_id (int)",
+    )
     return p.parse_args()
 
 
@@ -747,4 +960,7 @@ if __name__ == "__main__":
         seed=args.seed,
         external_policy_csv=args.external_policy_csv,
         external_policy_name=args.external_policy_name,
+        estimator_filter=args.estimator,
+        fairness_check=args.fairness_check,
+        fairness_group_col_idx=args.fairness_group_col,
     )

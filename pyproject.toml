@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "recsys-ope-platform"
-version = "0.1.0"
+version = "2.0.0"
 description = "End-to-end platform comparing RecSys (RecBole) vs Bandits/RL (TF-Agents) with Off-Policy Evaluation"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -33,10 +33,11 @@ dependencies = [
     
     # Configuration and logging
     "pyyaml>=6.0",
-    "pyyaml>=6.0",
     "python-dotenv>=1.0.0",
+    "structlog>=23.0.0",
     # Dashboard
     "streamlit>=1.30.0",
+    "plotly>=5.18.0",
 ]
 
 [project.optional-dependencies]
@@ -141,7 +142,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --strict-markers"  # --cov=src --cov-report=term-missing --cov-report=html"
+addopts = "-ra -q --strict-markers"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
